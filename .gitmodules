@@ -1,0 +1,3 @@
+[submodule "build/psximager"]
+	path = build/psximager
+	url = git@github.com:cebix/psximager.git
