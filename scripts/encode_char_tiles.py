@@ -1,7 +1,7 @@
 from PIL import Image
 from decode_char_tiles import hex_to_bytes, process_tile, print_tile
 
-image_path = "../tiles/ascii.png"
+image_path = "../tiles/table85.png"
 char_width = 8
 tile_width = 16
 tile_height = 13
