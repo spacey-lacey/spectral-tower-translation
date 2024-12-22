@@ -10,8 +10,7 @@ def write_tiles(file):
     tiles = split_into_tiles(image_path, char_width, tile_width, tile_height)
 
     for tile in tiles:
-        tile = extend_tile_width(tile, tile_width)
-        rows = encode_tile(tile)
+        rows = encode_tile(tile, n_row_bytes=1)
         file.write(b"".join(rows))
 
 

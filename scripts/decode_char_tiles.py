@@ -11,6 +11,7 @@ chunk_table_forbidden = 514488
 chunk_table_kanji = 514564
 tile_table_nonkanji = 514840 
 tile_table_kanji = 528464
+tile_table_english = 1589248
 
 
 def remap_shift_jis_char(shift_jis_code, rom_file):
@@ -22,9 +23,10 @@ def remap_shift_jis_char(shift_jis_code, rom_file):
     byte1 = code_bytes[0]
     byte2 = code_bytes[1]
 
-    # before shift jis tables
+    # ascii (only care about first byte)
     if byte1 < 0x81:
-        return -1
+        table_chunk_index = 0xf # match capital cyrillic
+        shift_jis_code = 0x839f - 0x20 + byte1
 
     # shift jis symbol table
     elif byte1 == 0x81:
@@ -87,43 +89,7 @@ def remap_shift_jis_char(shift_jis_code, rom_file):
     # forbidden tables
     # deceptively complex—none of these are in the game
     elif byte1 == 0x85:
-        if byte2 < 0x45:
-            table_chunk_index = 0
-        elif byte2 == 0x46:
-            table_chunk_index = 1
-        elif byte2 == 0x4b:
-            table_chunk_index = 2
-        elif byte2 < 0x50:
-            table_chunk_index = 3
-        elif byte2 < 0x5c:
-            table_chunk_index = 4
-        elif byte2 < 0xad:
-            table_chunk_index = 5
-        elif byte2 < 0xbc:
-            table_chunk_index = 6
-        else:
-            return -1
-    elif byte1 == 0x86:
-        if byte2 < 0x42:
-            table_chunk_index = 7
-        elif byte2 == 0x43:
-            table_chunk_index = 8
-        elif byte2 == 0x45:
-            table_chunk_index = 9
-        elif byte2 < 0x49:
-            table_chunk_index = 10
-        elif byte2 < 0x4d:
-            table_chunk_index = 0xb
-        elif byte2 < 0x50:
-            table_chunk_index = 0xc
-        elif byte2 < 0x70:
-            table_chunk_index = 0xd
-        elif byte2 < 0xb7:
-            table_chunk_index = 0xe
-        elif byte2 < 0xf5:
-            table_chunk_index = 0xf
-        else:
-            return -1
+        return shift_jis_code - 0x8500
 
     # second symbols table, but these tiles aren't in the game either
     elif byte1 == 0x87:
@@ -172,6 +138,9 @@ def remap_shift_jis_char(shift_jis_code, rom_file):
         if byte1 >= 0x8a:
             adjusted_code -= get_weird_kanji_offset(byte1)
 
+    print("chunk index:", table_chunk_index)
+    print("chunk offset:", chunk_offset)
+    print("remapped code:", adjusted_code + chunk_offset)
     return adjusted_code + chunk_offset
 
 
@@ -205,7 +174,7 @@ def decode_shift_jis(shift_jis_code):
         return ""
 
 
-def get_char_tile_start_address(shift_jis_code, rom_file):
+def get_char_tile_start_address(shift_jis_code, rom_file, n_row_bytes=2):
     '''
     find the first byte of the tile to be decoded
     each tile is 13 rows with 2 bytes per row, hence 0x1a (26)
@@ -216,11 +185,13 @@ def get_char_tile_start_address(shift_jis_code, rom_file):
         tile_table_base = tile_table_nonkanji
     else:
         tile_table_base = tile_table_kanji
+    if 0x84ff < shift_jis_code < 0x8600:
+        tile_table_base = tile_table_english
 
-    return tile_table_base + 0x1a * remapped_shift_jis
+    return tile_table_base + 13 * n_row_bytes * remapped_shift_jis
 
 
-def read_in_char_string(shift_jis_bytestring, rom_file, color_index=0):
+def read_in_char_string(shift_jis_bytestring, rom_file, color_index=0, n_row_bytes=2):
     '''
     read in a string of shift_jis bytes and get the decoded tiles as binary
     obvs we need the rom for this
@@ -232,15 +203,18 @@ def read_in_char_string(shift_jis_bytestring, rom_file, color_index=0):
     while i < len(shift_jis_bytestring) and shift_jis_bytestring[i] != 0:
         shift_jis_code = int.from_bytes(shift_jis_bytestring[i:i+2], byteorder="big")
         address = get_char_tile_start_address(shift_jis_code, rom_file)
+        print(hex(address - tile_table_nonkanji + 0x8008d16c + 0x1ac))
+        for i in range(0x1a):
+            print(hex(get_int_from_file(address + i, 1, rom_file)))
 
         for row in range(13):
-            for row_byte in range(2):
+            for row_byte in range(n_row_bytes):
                 value = get_int_from_file(address, 1, rom_file)
                 for pixel_bit in range(6, -2, -2):
                     pixel_bit_index = (value >> pixel_bit) & 3 # magic
                     pixel_bit_index = pixel_bit_index + text_color_table + color_offset
-                    pixel_bits = get_int_from_file(pixel_bit_index, 1, rom_file)
-                    result.append(pixel_bits)
+                    pixel_byte = get_int_from_file(pixel_bit_index, 1, rom_file)
+                    result.append(pixel_byte)
 
                 address += 1
         i += 2
@@ -283,21 +257,37 @@ def get_reversed_hex_string(bytestring):
     return hex_string[::-1]
 
 
-def process_tile_hex(tile_hex_string):
+def process_tile_hex(hex_string, tile_width=16):
     byte_string = hex_to_bytes(hex_string)
-    return process_tile(byte_string)
+    return process_tile(byte_string, tile_width)
 
 
-def process_tile(byte_string):
+def process_tile(byte_string, tile_width=16):
     '''
     read in bytestring for one tile (2 bytes)
     return hex representation of rows
     '''
     words = split_into_words(byte_string)
-    words = [reverse_endianness(word) for word in words]
-    rows = swap_and_concatenate_words(words)
+    if tile_width == 8:
+        words = [reverse_endianness(word) for word in words]
+        rows = words
+    elif tile_width == 16:
+        words = [reverse_endianness(word) for word in words]
+        rows = swap_and_concatenate_words(words)
+    else:
+        raise ValueError("tile must be 8 or 16px wide")
     hex_rows = [get_reversed_hex_string(row) for row in rows]
     return hex_rows
+
+
+def add_filler_bytes(words):
+    '''
+    add a filler byte between each byte to extend ascii to "shift jis"
+    '''
+    modified_words = []
+    for word in words:
+        modified_words.append(b"\xff" + b"".join(byte.to_bytes(1, "big") + b"\xff" for byte in word))
+    return modified_words
 
 
 def print_tile(hex_rows):
@@ -306,7 +296,7 @@ def print_tile(hex_rows):
     '''
     for row in hex_rows:
         row = re.sub(r"[1-9a-f]", "██", row)
-        print(row.replace("0", "  "))
+        print(row.replace("0", ". "))
 
 
 
@@ -317,7 +307,7 @@ if __name__ == "__main__":
     '''
     rom_file = open(rom_path, "rb")
 
-    for code in range(0x8140, 0x9900):
+    for code in range(0x839f, 0x83a0):
         print(hex(code), decode_shift_jis(code))
         code_bytes = code.to_bytes(2, byteorder="big")
         tile_bytes = read_in_char_string(code_bytes, rom_file, color_index=2)

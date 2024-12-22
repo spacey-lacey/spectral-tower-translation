@@ -1,9 +1,9 @@
 from PIL import Image
 from decode_char_tiles import hex_to_bytes, process_tile, print_tile
 
-image_path = "../tiles/table85.png"
+image_path = "../tiles/ascii.png"
 char_width = 8
-tile_width = 16
+tile_width = 8
 tile_height = 13
 
 
@@ -57,18 +57,18 @@ def print_png_tile(tile):
         print(string)
 
 
-def encode_tile(tile):
+def encode_tile(tile, n_row_bytes=2):
     '''
     encode a tile to the game format
-    for now, pad to 16px wide
     '''
     pixels = tile.load()
     width, height = tile.size
     rows = []
 
     for row in range(height):
-        row_values = [0, 0]
-        for row_byte in range(2):
+        row_values = []
+        for row_byte in range(n_row_bytes):
+            row_values.append(0)
             for pixel_bit in range(0, 8, 2):
                 x = row_byte * 8 + pixel_bit
                 y = row
@@ -93,14 +93,14 @@ def encode_tile(tile):
     return rows
 
 
-def decode_hex_string(hex_string):
+def decode_hex_string(hex_string, n_row_bytes=2):
     '''
     read in a string of tile bytes and decode them
     '''
     result = []
     digit_counter = 0
     for row in range(13):
-        for row_byte in range(2):
+        for row_byte in range(n_row_bytes):
             hex_value = hex_string[digit_counter : digit_counter + 2]
             value = int(hex_value, 16)
             for pixel_bit in range(6, -2, -2):
@@ -123,20 +123,11 @@ def decode_hex_string(hex_string):
     return bytes(result)
 
 
-def swap_words(byte_string):
-    '''
-    swap words in a 16px width tile
-    '''
-    length = len(byte_string) // 2
-    return byte_string[length:2*length] + byte_string[0:length]
-
-
-def tile_to_hex(tile):
+def tile_to_hex(tile, n_row_bytes=2):
     '''
     the whole shebang
     '''
-    tile = extend_tile_width(tile, tile_width)
-    rows = encode_tile(tile)
+    rows = encode_tile(tile, n_row_bytes)
     rows = [row.hex() for row in rows]
     return "".join(rows)
 
@@ -150,7 +141,7 @@ if __name__ == "__main__":
     for tile in tiles:
         print_png_tile(tile)
         print("")
-        tile_hex = tile_to_hex(tile)
-        decoded = decode_hex_string(tile_hex)
-        print_tile(process_tile(decoded))
+        tile_hex = tile_to_hex(tile, 1)
+        decoded = decode_hex_string(tile_hex, 1)
+        print_tile(process_tile(decoded, 8))
         print("")
