@@ -307,7 +307,7 @@ if __name__ == "__main__":
     '''
     rom_file = open(rom_path, "rb")
 
-    for code in range(0x839f, 0x83a0):
+    for code in range(0x8396, 0x8397):
         print(hex(code), decode_shift_jis(code))
         code_bytes = code.to_bytes(2, byteorder="big")
         tile_bytes = read_in_char_string(code_bytes, rom_file, color_index=2)

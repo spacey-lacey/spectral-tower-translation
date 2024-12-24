@@ -5,6 +5,7 @@ image_path = "../tiles/ascii.png"
 char_width = 8
 tile_width = 8
 tile_height = 13
+row_height = 14 # png has 14px rows, so adjust for this
 
 
 
@@ -16,8 +17,7 @@ def split_into_tiles(image_path, char_width, tile_width, tile_height):
     image_width, image_height = image.size
 
     tiles = []
-    # leave off bottom "spacing" row
-    for top in range(0, image_height, tile_height + 1):
+    for top in range(0, image_height, row_height):
         for left in range(0, image_width, char_width):
 
             # crop to the current tile
