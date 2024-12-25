@@ -25,19 +25,9 @@ def split_into_tiles(image_path, char_width, tile_width, tile_height):
             bottom = min(top + tile_height, image_height)
             tile = image.crop((left, top, right, bottom))
 
-            tiles.append(extend_tile_width(tile, tile_width))
+            tiles.append(tile)
 
     return tiles
-
-
-def extend_tile_width(tile, extended_width):
-    '''
-    use pillow to fill out to 16x14 tiles for now
-    '''
-    _, height = tile.size
-    extended_tile = Image.new("L", (extended_width, height), color=(255))
-    extended_tile.paste(tile, (0, 0))
-    return extended_tile
 
 
 def print_png_tile(tile):

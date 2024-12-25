@@ -1,6 +1,6 @@
-from encode_char_tiles import char_width, tile_width, tile_height, split_into_tiles, extend_tile_width, encode_tile
+from encode_char_tiles import char_width, tile_width, tile_height, split_into_tiles, encode_tile
 
-image_paths = ["../tiles/ascii_even.png", "../tiles/ascii_odd.png"]
+image_paths = ["../tiles/blocks_even.png", "../tiles/blocks_odd.png"]
 
 
 def write_tiles(file):
