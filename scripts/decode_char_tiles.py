@@ -138,9 +138,6 @@ def remap_shift_jis_char(shift_jis_code, rom_file):
         if byte1 >= 0x8a:
             adjusted_code -= get_weird_kanji_offset(byte1)
 
-    print("chunk index:", table_chunk_index)
-    print("chunk offset:", chunk_offset)
-    print("remapped code:", adjusted_code + chunk_offset)
     return adjusted_code + chunk_offset
 
 
@@ -151,16 +148,6 @@ def get_int_from_file(position, n_bytes, file):
     file.seek(position)
     value = file.read(n_bytes)
     return int.from_bytes(value, byteorder="little")
-
-
-def get_weird_kanji_offset(byte1):
-    '''
-    calculate strange offset for kanji tables
-    '''
-    base_value = 0x43
-    pairs = (byte1 - 0x8a) // 2
-    odd_offset = (byte1 - 0x8a) % 2
-    return base_value + pairs * 0x44 + odd_offset
 
 
 def decode_shift_jis(shift_jis_code):
@@ -203,9 +190,6 @@ def read_in_char_string(shift_jis_bytestring, rom_file, color_index=0, n_row_byt
     while i < len(shift_jis_bytestring) and shift_jis_bytestring[i] != 0:
         shift_jis_code = int.from_bytes(shift_jis_bytestring[i:i+2], byteorder="big")
         address = get_char_tile_start_address(shift_jis_code, rom_file)
-        print(hex(address - tile_table_nonkanji + 0x8008d16c + 0x1ac))
-        for i in range(0x1a):
-            print(hex(get_int_from_file(address + i, 1, rom_file)))
 
         for row in range(13):
             for row_byte in range(n_row_bytes):
@@ -307,7 +291,7 @@ if __name__ == "__main__":
     '''
     rom_file = open(rom_path, "rb")
 
-    for code in range(0x8396, 0x8397):
+    for code in range(0x8140, 0x819f):
         print(hex(code), decode_shift_jis(code))
         code_bytes = code.to_bytes(2, byteorder="big")
         tile_bytes = read_in_char_string(code_bytes, rom_file, color_index=2)

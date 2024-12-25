@@ -1,5 +1,6 @@
-from encode_char_tiles import image_path, char_width, tile_width, tile_height, split_into_tiles, extend_tile_width, encode_tile
+from encode_char_tiles import char_width, tile_width, tile_height, split_into_tiles, extend_tile_width, encode_tile
 
+image_paths = ["../tiles/ascii_even.png", "../tiles/ascii_odd.png"]
 
 
 def write_tiles(file):
@@ -7,11 +8,15 @@ def write_tiles(file):
     add encoded tiles to binary file
     '''
 
-    tiles = split_into_tiles(image_path, char_width, tile_width, tile_height)
+    tiles = []
+    for image_path in image_paths:
+        tiles.append(split_into_tiles(image_path, char_width, tile_width, tile_height))
 
-    for tile in tiles:
-        for copy in range(2):
-            rows = encode_tile(tile, n_row_bytes=1)
+    # tile index
+    for j in range(len(tiles[0])):
+        # tileset index
+        for i in range(2):
+            rows = encode_tile(tiles[i][j], n_row_bytes=1)
             file.write(b"".join(rows))
 
 
