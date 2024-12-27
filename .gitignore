@@ -1,0 +1,13 @@
+.DS_Store
+*.lock*
+*.7z
+*.cat
+*.sys
+*.csv*
+*/__pycache__
+build/rom
+*.bin
+*.cue
+HEADER
+*.swp
+*.swo
