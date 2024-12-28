@@ -7,8 +7,9 @@ from convert_ghidra_csv import get_dataframe, get_input_csv_name
 
 def encode_ascii(ascii_string):
     '''
-    encode an ascii string and add zero terminator
-    ensure number of bytes is a multiple of 4
+    encode an ascii string
+    if the string has an odd number of characters, add a trailing space
+    then add zero terminators until the number of bytes is a multiple of 4
     '''
     # if there is no string
     if ascii_string == "":
@@ -19,6 +20,10 @@ def encode_ascii(ascii_string):
 
     # encode!
     byte_string = ascii_string.encode("ascii")
+
+    # check number of characters
+    if len(byte_string) % 2 != 0:
+        byte_string += b"\x20"
 
     # add zeros
     byte_string += b"\x00"
@@ -36,13 +41,6 @@ def add_ascii_bytes(df):
     return df
 
 
-def add_string_addresses(df):
-    '''
-    add column of addresses for english strings
-    '''
-    start_address = df["jp_address"][0]
-
-
 def add_english_byte_length(df):
     '''
     add column of length of english strings in bytes
@@ -55,7 +53,6 @@ def add_japanese_byte_length(df):
     '''
     add column of length of japanese (hex) strings in bytes
     '''
-    # naively calculate length
     df["jp_length"] = df["jp_string"].apply(get_japanese_byte_length)
     return df
 
