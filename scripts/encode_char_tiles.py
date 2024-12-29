@@ -1,7 +1,7 @@
 from PIL import Image
 from decode_char_tiles import hex_to_bytes, process_tile, print_tile
 
-image_path = "../tiles/ascii.png"
+image_path = "../tiles/ascii_odd.png"
 char_width = 8
 tile_width = 8
 tile_height = 13
@@ -9,7 +9,7 @@ row_height = 14 # png has 14px rows, so adjust for this
 
 
 
-def split_into_tiles(image_path, char_width, tile_width, tile_height):
+def split_into_tiles(image_path, char_width, tile_width, tile_height, row_height):
     '''
     split an image of characters into individual tiles
     '''

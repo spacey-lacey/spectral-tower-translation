@@ -1,4 +1,4 @@
-from encode_char_tiles import char_width, tile_width, tile_height, split_into_tiles, encode_tile
+from encode_char_tiles import char_width, tile_width, tile_height, row_height, split_into_tiles, encode_tile
 
 image_paths = ["../tiles/ascii_even.png", "../tiles/ascii_odd.png"]
 
@@ -10,7 +10,7 @@ def write_tiles(file):
 
     tiles = []
     for image_path in image_paths:
-        tiles.append(split_into_tiles(image_path, char_width, tile_width, tile_height))
+        tiles.append(split_into_tiles(image_path, char_width, tile_width, tile_height, row_height))
 
     # tile index
     for j in range(len(tiles[0])):
