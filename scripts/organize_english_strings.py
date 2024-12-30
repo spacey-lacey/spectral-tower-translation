@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import sys
+import re
 
 from convert_ghidra_csv import get_dataframe, get_input_csv_name
 
@@ -15,11 +16,11 @@ def encode_ascii(ascii_string):
     if ascii_string == "":
         return ""
 
-    # replace "smart" apostrophe
-    ascii_string = ascii_string.replace("’", "'")
+    # remove non-ascii characters before encoding
+    ascii_string = replace_non_ascii_characters(ascii_string)
 
-    # encode!
-    byte_string = ascii_string.encode("ascii")
+    # encode and do regex replacement
+    byte_string = encode_and_regex_replace(ascii_string)
 
     # check number of characters
     if len(byte_string) % 2 != 0:
@@ -31,6 +32,34 @@ def encode_ascii(ascii_string):
         byte_string += b"\x00"
 
     return byte_string
+
+
+def replace_non_ascii_characters(ascii_string):
+    '''
+    remove automatic non-ascii characters before encoding
+    '''
+    # replace "smart" apostrophe
+    ascii_string = ascii_string.replace("’", "'")
+
+    return ascii_string
+
+
+def encode_and_regex_replace(ascii_string):
+    '''
+    replace spaces before odd-indexed capitals
+    '''
+    byte_array = bytearray(ascii_string.encode("ascii"))
+
+    for match in re.finditer(r" ([A-Z])", ascii_string):
+        space_index = match.start()
+        # only need to replace spaces before odd-index capitals
+        if space_index % 2 == 0:
+            ascii_code = byte_array[space_index + 1]
+            byte_array[space_index] = ascii_code - 0x40
+        else:
+            continue
+
+    return bytes(byte_array)
 
 
 def add_ascii_bytes(df):
@@ -157,6 +186,10 @@ def get_block_dictionary(df):
         # done!
         block_dictionary[block] = (start_address, end_address)
 
+    # add an overflow space
+    block = block_list[-1] + 1
+    block_dictionary[block] = (0, 100000000) 
+
     return block_dictionary
 
 
@@ -235,6 +268,8 @@ if __name__ == "__main__":
 
     # divide into blocks
     df = add_japanese_block_indices(df)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(df)
     dictionary = get_block_dictionary(df)
     print(dictionary)
 
