@@ -11,3 +11,4 @@ build/rom
 HEADER
 *.swp
 *.swo
+!translations/*.csv
