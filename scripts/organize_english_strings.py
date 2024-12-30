@@ -52,12 +52,8 @@ def encode_and_regex_replace(ascii_string):
 
     for match in re.finditer(r" ([A-Z])", ascii_string):
         space_index = match.start()
-        # only need to replace spaces before odd-index capitals
-        if space_index % 2 == 0:
-            ascii_code = byte_array[space_index + 1]
-            byte_array[space_index] = ascii_code - 0x40
-        else:
-            continue
+        ascii_code = byte_array[space_index + 1]
+        byte_array[space_index] = ascii_code - 0x40
 
     return bytes(byte_array)
 
