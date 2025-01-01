@@ -14,7 +14,7 @@ def get_dataframe(input_path):
     '''
     read in csv file as a pandas dataframe
     '''
-    df = pd.read_csv(input_path, delimiter="\t", keep_default_na=False)
+    df = pd.read_csv(input_path, delimiter="\t", keep_default_na=False, dtype={"en_text": str})
     print("Read", input_path)
     return df
 
