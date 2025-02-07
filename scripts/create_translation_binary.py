@@ -82,18 +82,6 @@ def create_string_data(df, table_name):
             f.write(zero_bytes)
 
         print("Created file", file_name)
-    
-
-'''
-shit to do later
-add fancy english space tiles to code
-remove 0x20 offset for ascii in remap_shift_jis_character
-write a function to regex the english string???  and if it finds the pattern " [A-Z]",
-use the string character index to change the byte at that index to LetterCode - 0x40
-eventually add more functionality like ellipses, quotes, en dash
-probably change replaced characters back to ascii and use 5 remaining slots for extras
-space for one more character...do i need another?
-'''
 
 
 if __name__ == "__main__":
