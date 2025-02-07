@@ -7,7 +7,9 @@ import os
 
 
 def read_shift_jis_string(api, address):
-    """Reads a null-terminated Shift JIS string starting at the given address."""
+    '''
+    Reads a null-terminated Shift JIS string starting at the given address.
+    '''
     string_bytes = []
     while True:
         byte = api.getByte(address)
@@ -18,11 +20,13 @@ def read_shift_jis_string(api, address):
 
     # Decode bytes as Shift JIS
     hex_string = str.join("", string_bytes)
-    return hex_string.decode('shift_jis', errors='replace')
+    return hex_string.decode("shift_jis", errors="replace")
 
 
 def get_address_by_label(label_name):
-    """Finds the address of a label by name."""
+    '''
+    Finds the address of a label by name.
+    '''
     symbols = currentProgram.symbolTable.getGlobalSymbols(label_name)
     symbol = symbols[0]
     if symbol is None:
@@ -31,7 +35,9 @@ def get_address_by_label(label_name):
 
 
 def extract_pointer_table(start_label, end_label):
-    """Extracts pointer table data using start and end labels."""
+    '''
+    Extracts pointer table data using start and end labels.
+    '''
     api = FlatProgramAPI(currentProgram)
 
     # Get start and end addresses based on labels
@@ -44,23 +50,31 @@ def extract_pointer_table(start_label, end_label):
 
     # Open CSV file for writing
     with open(csv_file, "w") as f:
-        writer = csv.writer(f, delimiter='\t')
+        writer = csv.writer(f, delimiter="\t")
         writer.writerow(["jp_pointer", "jp_address", "jp_string"])
 
         current_pointer_address = pointer_table_start
 
+        # get pointer and data words
         while not current_pointer_address.equals(pointer_table_end):
-            # Get target address
-            target_address_value = api.getLong(current_pointer_address)
-            target_address_value = target_address_value & 0xffffffff # convert to unsigned
-            target_address_value = str(hex(target_address_value))[:-1] # remove "L" at the end of the string
-            target_address = currentProgram.getAddressFactory().getAddress(target_address_value)
+            current_word_value = api.getLong(current_pointer_address)
+            current_word_value = current_word_value & 0xffffffff # convert to unsigned
 
-            # Read the string at the target address
-            string = read_shift_jis_string(api, target_address)
+            # check if word is a pointer
+            if 0x80000000 <= current_word_value <= 0x80200000:
+                target_address_value = str(hex(current_word_value))[:-1] # remove "L" at the end of the string
+                target_address = currentProgram.getAddressFactory().getAddress(target_address_value)
 
-            # Write the data to the CSV
-            writer.writerow([current_pointer_address.toString(), target_address.toString(), string])
+                # Read the string at the target address
+                string = read_shift_jis_string(api, target_address)
+
+                # Write the data to the CSV
+                writer.writerow([current_pointer_address.toString(), target_address.toString(), string])
+
+            # if it isn't, just write the word
+            else:
+                writer.writerow([current_pointer_address, current_word_value, ""])
+
 
             # Go to next pointer
             current_pointer_address = current_pointer_address.next().next().next().next()
