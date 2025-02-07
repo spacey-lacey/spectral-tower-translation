@@ -6,7 +6,7 @@ translating spectral tower (ps1) into english!!
 - Greek and Cyrillic fullwidth tiles replaced with ASCII
 - Added single-byte ASCII logic to character code remapping
 - Implemented ASCII tilesets for even and odd string indices
-- Translated item names
+- Translated item names, character classes, enemy names, and misc. menu text
 - Removed dummy cases from string substitution logic (ｇ, ｈ, ｋ)
 - Updated text box printing, including substitution of placeholder characters, to accept ASCII and Shift_JIS characters
 
